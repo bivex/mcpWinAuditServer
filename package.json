@@ -8,7 +8,11 @@
   "description": "MCP Windows Audit Server",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.5.0",
+    "ffi-napi": "^4.0.3",
     "minimist": "^1.2.8",
+    "ref-array-napi": "^1.2.2",
+    "ref-napi": "^3.0.3",
+    "ref-struct-napi": "^1.1.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {

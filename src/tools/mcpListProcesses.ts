@@ -3,6 +3,9 @@ import { z } from "zod";
 import * as ffi from "ffi-napi";
 import * as ref from "ref-napi";
 import * as Struct from "ref-struct-napi";
+import ArrayType from "ref-array-napi";
+
+console.log('ArrayType is:', typeof ArrayType, ArrayType);
 
 // Define Windows data types using ref-napi
 const VOID = ref.types.void;
@@ -13,7 +16,7 @@ const BOOL = ref.types.bool;
 const TCHAR = ref.types.char;
 
 // Define PROCESSENTRY32 structure
-const PROCESSENTRY32 = Struct({
+const PROCESSENTRY32 = Struct.default({
   dwSize: DWORD,
   cntUsage: DWORD,
   th32ProcessID: DWORD,
@@ -23,7 +26,7 @@ const PROCESSENTRY32 = Struct({
   th32ParentProcessID: DWORD,
   pcPriClassBase: ULONG,
   dwFlags: DWORD,
-  szExeFile: TCHAR.array(260),
+  szExeFile: ArrayType(TCHAR, 260),
 });
 const LPPROCESSENTRY32 = ref.refType(PROCESSENTRY32);
 
