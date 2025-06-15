@@ -1,6 +1,8 @@
-# mcpWinAuditServer 🛠️
+# mcpWinAuditServer 💻
 
 A starter template for building your own Model Context Protocol (MCP) server. This template provides the basic structure and setup needed to create custom MCPs that can be used with Cursor or Claude Desktop.
+
+**⚠️ Current Status: Only the `mcpFreeMemory` tool is fully functional at the moment. We are actively working on improving other tools. ⚠️**
 
 ## Features
 
