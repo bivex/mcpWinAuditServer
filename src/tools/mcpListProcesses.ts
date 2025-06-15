@@ -13,7 +13,7 @@ const ULONG = ref.types.ulong;
 const DWORD = ref.types.ulong;
 const HANDLE = ref.refType(VOID);
 const BOOL = ref.types.bool;
-const TCHAR = ref.types.char;
+const WCHAR = ref.types.ushort;
 
 // Define PROCESSENTRY32 structure
 const PROCESSENTRY32 = Struct.default({
@@ -26,15 +26,15 @@ const PROCESSENTRY32 = Struct.default({
   th32ParentProcessID: DWORD,
   pcPriClassBase: ULONG,
   dwFlags: DWORD,
-  szExeFile: ArrayType(TCHAR, 260),
+  szExeFile: ArrayType(WCHAR, 260),
 });
 const LPPROCESSENTRY32 = ref.refType(PROCESSENTRY32);
 
 // Define Windows API functions
 const kernel32 = ffi.Library("kernel32.dll", {
   CreateToolhelp32Snapshot: [HANDLE, [DWORD, DWORD]],
-  Process32First: [BOOL, [HANDLE, LPPROCESSENTRY32]],
-  Process32Next: [BOOL, [HANDLE, LPPROCESSENTRY32]],
+  Process32FirstW: [BOOL, [HANDLE, LPPROCESSENTRY32]],
+  Process32NextW: [BOOL, [HANDLE, LPPROCESSENTRY32]],
   CloseHandle: [BOOL, [HANDLE]],
 });
 
@@ -69,9 +69,9 @@ export function mcpListProcessesTool(server: McpServer) {
       let output = "";
       const processes = [];
 
-      if (kernel32.Process32First(hSnapshot, pe32.ref)) {
+      if (kernel32.Process32FirstW(hSnapshot, pe32.ref)) {
         do {
-          const processName = pe32.szExeFile.readCString();
+          const processName = pe32.szExeFile.readString(0, 260 * 2, 'ucs2').replace(/\0/g, '');
           const processId = pe32.th32ProcessID;
 
           const matchesFilter = 
@@ -81,7 +81,7 @@ export function mcpListProcessesTool(server: McpServer) {
           if (matchesFilter) {
             processes.push({ name: processName, id: processId });
           }
-        } while (kernel32.Process32Next(hSnapshot, pe32.ref));
+        } while (kernel32.Process32NextW(hSnapshot, pe32.ref));
       }
 
       kernel32.CloseHandle(hSnapshot);
