@@ -6,7 +6,6 @@ import * as Struct from "ref-struct-napi";
 
 // Define Windows data types using ref-napi
 const VOID = ref.types.void;
-const UINT = ref.types.uint;
 const ULONG = ref.types.ulong;
 const DWORD = ref.types.ulong;
 const HANDLE = ref.refType(VOID);
@@ -69,7 +68,7 @@ export function mcpListProcessesTool(server: McpServer) {
 
       if (kernel32.Process32First(hSnapshot, pe32.ref)) {
         do {
-          const processName = pe32.szExeFile.inspect().replace(/\u0000/g, "");
+          const processName = pe32.szExeFile.readCString();
           const processId = pe32.th32ProcessID;
 
           const matchesFilter = 
