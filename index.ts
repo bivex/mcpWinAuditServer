@@ -13,6 +13,7 @@ import { mcpAuditCoreTool } from "./src/tools/mcpAuditCore.js";
 import { mcpSysTrackerTool } from "./src/tools/mcpSysTracker.js";
 import { mcpForensicAgentTool } from "./src/tools/mcpForensicAgent.js";
 import { mcpLogSentinelTool } from "./src/tools/mcpLogSentinel.js";
+import { mcpListProcessesTool } from "./src/tools/mcpListProcesses.js";
 
 // Create server instance
 const server = new McpServer({
@@ -32,6 +33,7 @@ mcpAuditCoreTool(server);
 mcpSysTrackerTool(server);
 mcpForensicAgentTool(server);
 mcpLogSentinelTool(server);
+mcpListProcessesTool(server);
 
 async function main() {
   const transport = new StdioServerTransport();
