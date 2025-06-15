@@ -43,10 +43,18 @@ export function mcpFreeMemoryTool(server: McpServer) {
       memoryStatus.dwLength = MEMORYSTATUSEX.size;
 
       if (kernel32.GlobalMemoryStatusEx(memoryStatusBuffer)) {
-        const totalPhysicalMB = Number(memoryStatus.ullTotalPhys) / (1024 * 1024);
-        const availPhysicalMB = Number(memoryStatus.ullAvailPhys) / (1024 * 1024);
-        const totalVirtualMB = Number(memoryStatus.ullTotalVirtual) / (1024 * 1024);
-        const availVirtualMB = Number(memoryStatus.ullAvailVirtual) / (1024 * 1024);
+        // Read ULONGLONG values as BigInt for precision
+        const totalPhysicalBytes = BigInt(memoryStatus.ullTotalPhys);
+        const availPhysicalBytes = BigInt(memoryStatus.ullAvailPhys);
+        const totalVirtualBytes = BigInt(memoryStatus.ullTotalVirtual);
+        const availVirtualBytes = BigInt(memoryStatus.ullAvailVirtual);
+
+        const MB = BigInt(1024 * 1024);
+
+        const totalPhysicalMB = Number(totalPhysicalBytes / MB);
+        const availPhysicalMB = Number(availPhysicalBytes / MB);
+        const totalVirtualMB = Number(totalVirtualBytes / MB);
+        const availVirtualMB = Number(availVirtualBytes / MB);
 
         const output = `
           Memory Information:

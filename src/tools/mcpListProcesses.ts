@@ -3,9 +3,6 @@ import { z } from "zod";
 import * as ffi from "ffi-napi";
 import * as ref from "ref-napi";
 import * as Struct from "ref-struct-napi";
-import ArrayType from "ref-array-napi";
-
-console.log('ArrayType is:', typeof ArrayType, ArrayType);
 
 // Define Windows data types using ref-napi
 const VOID = ref.types.void;
@@ -26,7 +23,7 @@ const PROCESSENTRY32 = Struct.default({
   th32ParentProcessID: DWORD,
   pcPriClassBase: ULONG,
   dwFlags: DWORD,
-  szExeFile: ArrayType(WCHAR, 260),
+  szExeFile: ref.types.buffer(260 * WCHAR.size), // Explicitly define as a Buffer
 });
 const LPPROCESSENTRY32 = ref.refType(PROCESSENTRY32);
 
@@ -63,15 +60,18 @@ export function mcpListProcessesTool(server: McpServer) {
         };
       }
 
-      const pe32 = new PROCESSENTRY32();
+      // Allocate a raw Buffer for the PROCESSENTRY32 structure
+      const pe32Buffer = Buffer.alloc(PROCESSENTRY32.size);
+      // Cast the Buffer to a PROCESSENTRY32 instance
+      const pe32 = new PROCESSENTRY32(pe32Buffer);
       pe32.dwSize = PROCESSENTRY32.size;
 
       let output = "";
       const processes = [];
 
-      if (kernel32.Process32FirstW(hSnapshot, pe32.ref)) {
+      if (kernel32.Process32FirstW(hSnapshot, pe32Buffer)) {
         do {
-          const processName = pe32.szExeFile.readString(0, 260 * 2, 'ucs2').replace(/\0/g, '');
+          const processName = pe32.szExeFile.readString(0, 260 * WCHAR.size, 'ucs2').replace(/\0/g, '');
           const processId = pe32.th32ProcessID;
 
           const matchesFilter = 
@@ -81,7 +81,7 @@ export function mcpListProcessesTool(server: McpServer) {
           if (matchesFilter) {
             processes.push({ name: processName, id: processId });
           }
-        } while (kernel32.Process32NextW(hSnapshot, pe32.ref));
+        } while (kernel32.Process32NextW(hSnapshot, pe32Buffer));
       }
 
       kernel32.CloseHandle(hSnapshot);
