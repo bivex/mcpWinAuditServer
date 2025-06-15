@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+// import { z } from "zod";
 import { mcpWinAuditServerTool } from "./src/tools/mcpWinAuditServer.js";
 import { mcpProcRegWatchTool } from "./src/tools/mcpProcRegWatch.js";
 import { mcpSecAuditTool } from "./src/tools/mcpSecAudit.js";
