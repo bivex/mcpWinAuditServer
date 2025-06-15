@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { mcpFreeMemoryTool } from "./mcpFreeMemory.js";
 
 export function mcpWinAuditServerTool(server: McpServer) {
   server.tool(
@@ -23,4 +24,5 @@ export function mcpWinAuditServerTool(server: McpServer) {
       };
     }
   );
+  mcpFreeMemoryTool(server);
 } 

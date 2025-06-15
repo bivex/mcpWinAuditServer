@@ -14,6 +14,7 @@ import { mcpSysTrackerTool } from "./src/tools/mcpSysTracker.js";
 import { mcpForensicAgentTool } from "./src/tools/mcpForensicAgent.js";
 import { mcpLogSentinelTool } from "./src/tools/mcpLogSentinel.js";
 import { mcpListProcessesTool } from "./src/tools/mcpListProcesses.js";
+import { mcpFreeMemoryTool } from "./src/tools/mcpFreeMemory.js";
 
 // Create server instance
 const server = new McpServer({
