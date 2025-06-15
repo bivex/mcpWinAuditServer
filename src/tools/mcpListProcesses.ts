@@ -3,6 +3,7 @@ import { z } from "zod";
 import * as ffi from "ffi-napi";
 import * as ref from "ref-napi";
 import * as Struct from "ref-struct-napi";
+import ArrayType from "ref-array-napi";
 
 // Define Windows data types using ref-napi
 const VOID = ref.types.void;
@@ -23,7 +24,7 @@ const PROCESSENTRY32 = Struct.default({
   th32ParentProcessID: DWORD,
   pcPriClassBase: ULONG,
   dwFlags: DWORD,
-  szExeFile: ref.types.buffer(260 * WCHAR.size), // Explicitly define as a Buffer
+  szExeFile: ArrayType(WCHAR, 260),
 });
 const LPPROCESSENTRY32 = ref.refType(PROCESSENTRY32);
 
@@ -46,31 +47,37 @@ export function mcpListProcessesTool(server: McpServer) {
     async ({ filterByName, filterById }) => {
       const TH32CS_SNAPPROCESS = 0x00000002;
       const INVALID_HANDLE_VALUE = -1;
+      let debugMessage = "";
 
       const hSnapshot = kernel32.CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+      debugMessage += `Snapshot Handle: ${hSnapshot.address}; `;
 
       if (hSnapshot.address === INVALID_HANDLE_VALUE) {
+        debugMessage += "CreateToolhelp32Snapshot failed.";
         return {
           content: [
             {
               type: "text",
-              text: "Error: Could not create process snapshot.",
+              text: `Error: Could not create process snapshot. Debug: ${debugMessage}`,
             },
           ],
         };
       }
 
-      // Allocate a raw Buffer for the PROCESSENTRY32 structure
-      const pe32Buffer = Buffer.alloc(PROCESSENTRY32.size);
-      // Cast the Buffer to a PROCESSENTRY32 instance
-      const pe32 = new PROCESSENTRY32(pe32Buffer);
+      // Allocate a Buffer for the PROCESSENTRY32 structure
+      const pe32Buffer = ref.alloc(PROCESSENTRY32);
+      // Get a JavaScript object representation of the struct from the buffer
+      const pe32 = pe32Buffer.deref();
       pe32.dwSize = PROCESSENTRY32.size;
 
-      let output = "";
       const processes = [];
 
-      if (kernel32.Process32FirstW(hSnapshot, pe32Buffer)) {
+      let firstProcessResult = kernel32.Process32FirstW(hSnapshot, pe32Buffer);
+      debugMessage += `Process32FirstW result: ${firstProcessResult}; `;
+
+      if (firstProcessResult) {
         do {
+          // Correctly read wide string from ArrayType buffer
           const processName = pe32.szExeFile.readString(0, 260 * WCHAR.size, 'ucs2').replace(/\0/g, '');
           const processId = pe32.th32ProcessID;
 
@@ -81,25 +88,42 @@ export function mcpListProcessesTool(server: McpServer) {
           if (matchesFilter) {
             processes.push({ name: processName, id: processId });
           }
+          // Check Process32NextW result to see if loop continues
+          let nextProcessResult = kernel32.Process32NextW(hSnapshot, pe32Buffer);
+          if (!nextProcessResult && processes.length > 0) {
+            // If we found some processes but the loop stopped unexpectedly
+            debugMessage += "Process32NextW returned false prematurely after finding processes.";
+          } else if (!nextProcessResult && processes.length === 0) {
+            // If no processes found and loop stopped at the first attempt to move next
+            debugMessage += "Process32NextW returned false, no processes found during iteration.";
+          }
+
         } while (kernel32.Process32NextW(hSnapshot, pe32Buffer));
+      } else {
+        debugMessage += "Process32FirstW returned false, no processes found.";
       }
 
       kernel32.CloseHandle(hSnapshot);
 
       if (processes.length > 0) {
-        output = "Found processes:\n" + processes.map(p => `- Name: ${p.name}, ID: ${p.id}`).join("\n");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(processes, null, 2),
+            },
+          ],
+        };
       } else {
-        output = "No processes found matching the criteria.";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No processes found matching the criteria. Debug: ${debugMessage}`,
+            },
+          ],
+        };
       }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: output,
-          },
-        ],
-      };
     }
   );
 } 
